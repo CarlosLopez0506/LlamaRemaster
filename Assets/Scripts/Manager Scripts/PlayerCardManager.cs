@@ -45,7 +45,7 @@ public class PlayerCardManager : MonoBehaviour
             playerCards.Add(cardObject.transform);
 
             // Manually adjust the position of each card
-            cardObject.transform.localPosition = new Vector3(-650 + i * 400, 363, 0);
+            cardObject.transform.localPosition = new Vector3(-760 + i * 500, 440, 0);
         }
     }
 
