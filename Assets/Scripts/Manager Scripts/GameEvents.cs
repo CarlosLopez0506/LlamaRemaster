@@ -28,7 +28,7 @@ public class GameEvents : MonoBehaviour
         PlayerDataManager.Instance.AddCubes();
         PlayerCardManager.Instance.CreatePlayerCards();
         PlayerCardManager.Instance.UpdateCardData(PlayerDataManager.Instance.allPlayers);
-        PieceManager.Instance.CreatePlayerPieces(Gamepad.all.Count);
+        PieceManager.Instance.CreatePlayerPieces(PlayerDataManager.Instance.allPlayers);
 
         PieceManager.Instance.SetPiecesLastPositions();
 

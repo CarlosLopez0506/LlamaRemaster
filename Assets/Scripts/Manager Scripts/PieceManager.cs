@@ -5,7 +5,10 @@ public class PieceManager : MonoBehaviour
 {
     public static PieceManager Instance;
 
-    public GameObject piecePrefab; // Prefab para la pieza
+    public GameObject meiPrefab; // Prefab para la pieza
+    public GameObject moePrefab; // Prefab para la pieza
+    public GameObject maroonPrefab; // Prefab para la pieza
+    public GameObject mannyPrefab; // Prefab para la pieza
     
     public List<GameObject> pieces = new List<GameObject>();
     public List<Transform> playerPieces = new List<Transform>();
@@ -31,15 +34,35 @@ public class PieceManager : MonoBehaviour
         allPlayers = players;
     }
 
-    public void CreatePlayerPieces(int numPlayers)
+    public void CreatePlayerPieces(List<PlayerData> players)
     {
         playerPieces.Clear();
-        for (int i = 0; i < numPlayers; i++)
+
+        foreach (var player in players)
         {
-            GameObject pieceObject = Instantiate(piecePrefab);
+            GameObject pieceObject;
+
+            switch (player.playerName)
+            {
+                case "Mei":
+                    pieceObject = Instantiate(meiPrefab);
+                    break;
+                case "Maroon":
+                    pieceObject = Instantiate(maroonPrefab); // Assuming you have a maroonPrefab
+                    break;
+                case "Manny":
+                    pieceObject = Instantiate(mannyPrefab); // Assuming you have a mannyPrefab
+                    break;
+                case "Moe":
+                    pieceObject = Instantiate(moePrefab); // Assuming you have a moePrefab
+                    break;
+                default:
+                    Debug.LogWarning($"Piece for player '{player.playerName}' does not exist.");
+                    continue; // Skip to the next iteration of the loop
+            }
+
             playerPieces.Add(pieceObject.transform);
             pieces.Add(pieceObject);
-            
         }
     }
     

@@ -50,7 +50,7 @@ public class BoardManager : MonoBehaviour
     void InitializeGameComponents()
     {
         PlayerCardManager.Instance.CreatePlayerCards();
-        PieceManager.Instance.CreatePlayerPieces(Gamepad.all.Count);
+        PieceManager.Instance.CreatePlayerPieces(PlayerDataManager.Instance.allPlayers);
         PieceManager.Instance.SetPiecesLastPositions();
         PieceManager.Instance.SetAllPlayers(PlayerDataManager.Instance.allPlayers);
         PlayerCardManager.Instance.UpdateCardData(PlayerDataManager.Instance.allPlayers);
