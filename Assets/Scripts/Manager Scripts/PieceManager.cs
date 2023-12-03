@@ -37,6 +37,7 @@ public class PieceManager : MonoBehaviour
     public void CreatePlayerPieces(List<PlayerData> players)
     {
         playerPieces.Clear();
+        pieces.Clear();
 
         foreach (var player in players)
         {

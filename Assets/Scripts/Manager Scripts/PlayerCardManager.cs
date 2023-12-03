@@ -7,8 +7,11 @@ public class PlayerCardManager : MonoBehaviour
 {
     public static PlayerCardManager Instance; // Singleton instance
 
-    public GameObject cardPrefab; // Prefab para la carta del jugador
-    public List<Transform> playerCards = new List<Transform>();
+    public GameObject cardMei;
+    public GameObject cardMaroon;
+    public GameObject cardMoe;
+    public GameObject cardManny;
+
 
     void Awake()
     {
@@ -16,7 +19,7 @@ public class PlayerCardManager : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(
-                gameObject); // Optional: Prevents the object from being destroyed when loading a new scene
+                gameObject);
         }
         else
         {
@@ -36,30 +39,46 @@ public class PlayerCardManager : MonoBehaviour
         }
 
         Transform cardsParent = cardsParentObject.transform;
-        playerCards.Clear();
-
-        // Create player cards dynamically
-        for (int i = 0; i < Gamepad.all.Count; i++)
+        var startingPosition = 0;
+        foreach (var player in PlayerDataManager.Instance.allPlayers)
         {
-            GameObject cardObject = Instantiate(cardPrefab, cardsParent);
-            playerCards.Add(cardObject.transform);
+            GameObject cardObject;
 
-            // Manually adjust the position of each card
-            cardObject.transform.localPosition = new Vector3(-760 + i * 500, 440, 0);
+            switch (player.playerName)
+            {
+                case "Mei":
+                    cardObject = Instantiate(cardMei, cardsParent);
+                    player.SetCard(cardObject);
+                    break;
+                case "Maroon":
+                    cardObject = Instantiate(cardMaroon, cardsParent);
+                    player.SetCard(cardObject);
+                    break;
+                case "Manny":
+                    cardObject = Instantiate(cardManny, cardsParent);
+                    player.SetCard(cardObject);
+                    break;
+                case "Moe":
+                    cardObject = Instantiate(cardMoe, cardsParent);
+                    player.SetCard(cardObject);
+                    break;
+                default:
+                    Debug.LogWarning($"Piece for player '{player.playerName}' does not exist.");
+                    continue;
+            }
+
+
+            cardObject.transform.localPosition = new Vector3(-760 + startingPosition * 500, 440, 0);
+            startingPosition++;
         }
     }
 
 
-
     public void UpdateCardData(List<PlayerData> allPlayers)
     {
-        for (int i = 0; i < allPlayers.Count; i++)
+        foreach (var player in allPlayers)
         {
-            PlayerData player = allPlayers[i];
-            Transform playerCard = playerCards[i];
-
-            // Actualiza la interfaz de la carta del jugador
-            UpdateCardUI(playerCard, player.position, player.playerName, player.cizanaPoints);
+            UpdateCardUI(player.card.transform, player.position, player.playerName, player.cizanaPoints);
         }
     }
 
@@ -101,5 +120,4 @@ public class PlayerCardManager : MonoBehaviour
             Debug.LogError("One or more TextMeshProUGUI components are null.");
         }
     }
-
 }

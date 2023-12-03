@@ -13,6 +13,7 @@ public class PlayerData
     public List<Debuff> debuffs;
     public Gamepad assignedGamepad;
     public GameObject llamaPiece;
+    public GameObject card;
     public Transform[] targetCubes;
 
     public PlayerData(string name, int initialPosition, Gamepad gamepad, int controllerNumber)
@@ -23,6 +24,11 @@ public class PlayerData
         debuffs = new List<Debuff>();
         assignedGamepad = gamepad;
         playerControllerNumber = controllerNumber;
+    }
+
+    public void SetCard(GameObject card)
+    {
+        this.card = card;
     }
 
     public void SetTargetCubes(Transform[] cubes)
@@ -57,6 +63,7 @@ public class PlayerData
     {
         // Move the player forward by incrementing the position
         position++;
+        PlayerCardManager.Instance.UpdateCardData(PlayerDataManager.Instance.allPlayers);
     }
 
     public void MoveBackward()

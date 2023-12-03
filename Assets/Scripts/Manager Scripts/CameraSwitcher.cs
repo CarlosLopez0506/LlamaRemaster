@@ -28,17 +28,21 @@ public class CameraSwitcher : MonoBehaviour
         }
     }
 
+    public void FindCameras()
+    {
+        cameras = FindObjectsOfType<CinemachineVirtualCamera>();
+    }
+
     public void SwitchCamera(CinemachineVirtualCameraBase startingCamera, CinemachineVirtualCameraBase endCamera)
     {
-        foreach (var camera in cameras)
+        foreach (var virtualCamera in cameras)
         {
-            if (camera != startingCamera)
+            if (virtualCamera != startingCamera)
             {
-                camera.enabled = false;
+                virtualCamera.enabled = false;
             }
         }
 
-        // Enable the new camera
         endCamera.enabled = true;
     }
 }
