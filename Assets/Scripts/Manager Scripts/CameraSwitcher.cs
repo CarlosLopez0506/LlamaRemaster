@@ -1,3 +1,4 @@
+using System.Linq;
 using UnityEngine;
 using Cinemachine;
 
@@ -30,7 +31,7 @@ public class CameraSwitcher : MonoBehaviour
 
     public void FindCameras()
     {
-        cameras = FindObjectsOfType<CinemachineVirtualCamera>();
+        cameras = FindObjectsOfType<CinemachineVirtualCamera>().OrderBy(c => c.Priority).ToArray();
     }
 
     public void SwitchCamera(CinemachineVirtualCameraBase startingCamera, CinemachineVirtualCameraBase endCamera)

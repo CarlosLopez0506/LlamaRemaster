@@ -2,7 +2,7 @@
 public class Debuff
 {
     public string debuffName;
-    public int duration; // Number of turns the debuff lasts
+    public int duration; 
 
     public Debuff(string name, int turns)
     {
