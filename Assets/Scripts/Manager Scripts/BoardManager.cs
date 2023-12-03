@@ -71,14 +71,11 @@ public class BoardManager : MonoBehaviour
 
         if (rawImageEncontrada != null)
         {
-
             rawImageEncontrada.enabled = true;
             GameObject dialogChild = dialog.transform.GetChild(0).gameObject;
             TextMeshProUGUI textDialog = dialogChild.GetComponent<TextMeshProUGUI>();
             textDialog.enabled = true;
 
-
-            
 
             textDialog.color = Color.black;
 
@@ -92,13 +89,12 @@ public class BoardManager : MonoBehaviour
                 Debug.Log(PlayerDataManager.Instance.IsButtonPressed(PlayerData.Button.A));
 
                 yield return new WaitUntil(() => PlayerDataManager.Instance.IsButtonPressed(PlayerData.Button.A));
-
-
             }
 
             textDialog.enabled = false;
-
             rawImageEncontrada.enabled = false;
+            CameraSwitcher.Instance.SwitchCamera(CameraSwitcher.Instance.cameras[0],
+                CameraSwitcher.Instance.cameras[2]);
         }
         else
         {
@@ -193,6 +189,7 @@ public class BoardManager : MonoBehaviour
 
 
             yield return MovePlayersToMasterControl(masterControlPosition);
+            CameraSwitcher.Instance.SwitchCamera(CameraSwitcher.Instance.cameras[2],CameraSwitcher.Instance.cameras[1]);
         }
         else
         {
@@ -211,29 +208,19 @@ public class BoardManager : MonoBehaviour
             GameObject textMeshContainer = new GameObject("TextMeshContainer");
             textMeshContainer.transform.parent = playerPiece.transform;
 
-            TextMesh textMesh = textMeshContainer.AddComponent<TextMesh>();
+            TextMeshPro textMesh = textMeshContainer.AddComponent<TextMeshPro>();
 
             textMesh.fontSize = 8;
-            textMesh.anchor = TextAnchor.LowerCenter;
-            textMesh.alignment = TextAlignment.Center;
-            textMeshContainer.transform.localPosition = new Vector3(0f, 1.5f, 0f);
-            textMeshContainer.transform.localRotation = Quaternion.Euler(new Vector3(0f, 180f, 0f));
-
-
-            if (textMesh == null)
-            {
-                GameObject textContainer = new GameObject("TextContainer");
-                textContainer.transform.parent = playerPiece.transform;
-
-                textMesh = textContainer.AddComponent<TextMesh>();
-            }
+            textMesh.alignment = TextAlignmentOptions.Center;
+            textMeshContainer.transform.localPosition = new Vector3(0f, 3.5f, 0f);
+            textMeshContainer.transform.localRotation = Quaternion.Euler(new Vector3(30f, 180f, 0f));
 
             Vector3 playerCurrentPosition = player.GetPlayerCurrentPosition();
-
 
             yield return new WaitForSeconds(1f);
 
             player.SetPlayerPosition(masterControlPosition);
+
 
             var coroutineCount = StartCoroutine(CountEverySecond());
 
@@ -241,13 +228,13 @@ public class BoardManager : MonoBehaviour
             {
                 textMesh.text = _points.ToString();
 
-
                 yield return null;
             }
 
             StopCoroutine(coroutineCount);
             player.SetPlayerPosition(playerCurrentPosition);
-            
+            textMeshContainer.transform.localRotation = Quaternion.Euler(new Vector3(0f, 180f, 0f));
+
             _waitingForButtonPress = true;
         }
     }
