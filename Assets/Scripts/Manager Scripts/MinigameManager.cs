@@ -38,7 +38,7 @@ public class MinigameManager : MonoBehaviour
     private void InitializeMinigameNames()
     {
         minigameNames.Add("MG1");
-        // Add more minigame entries as needed
+        minigameNames.Add("MG2");
     }
 
     private void CreateMinigameText()
