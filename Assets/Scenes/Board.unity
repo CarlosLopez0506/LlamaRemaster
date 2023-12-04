@@ -1950,15 +1950,15 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1618141776}
-  m_LocalRotation: {x: 0.49414515, y: 0.50584507, z: -0.49861947, w: 0.5013182}
-  m_LocalPosition: {x: -2.102234, y: 21.484009, z: 10.655167}
+  m_LocalRotation: {x: 0, y: 0.7071068, z: -0.7071068, w: 0}
+  m_LocalPosition: {x: 3, y: 25, z: 9}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1749862368}
   m_Father: {fileID: 0}
   m_RootOrder: 5
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 90, y: 180, z: 0}
 --- !u!1 &1668775205
 GameObject:
   m_ObjectHideFlags: 3
@@ -2716,6 +2716,8 @@ MonoBehaviour:
   roulettePanel: {fileID: 1721616036}
   minigameTextPrefab: {fileID: 6399890280765873469, guid: 62f85607eb404654d96aac1e81fb252f, type: 3}
   minigameNames: []
+  _chooseRandomMinigame: 1
+  channelButtonSceneToPlay: 
 --- !u!4 &2059376346
 Transform:
   m_ObjectHideFlags: 0

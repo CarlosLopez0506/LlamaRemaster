@@ -133,10 +133,9 @@ public class BoardManager : MonoBehaviour
         _isGameStarted = true;
         InitializeGameComponents();
         yield return StartCoroutine(GameEvents.Instance.ManageDialogIntroduction());
-        // yield return StartCoroutine(AssignTurnOrderCoroutine());
-        // yield return new WaitForSeconds(2f);
-        // MinigameManager.Instance.ChooseRandomMinigame();
-        StartCoroutine(GameEvents.Instance.LaunchStore());
+        yield return StartCoroutine(AssignTurnOrderCoroutine());
+        yield return new WaitForSeconds(2f);
+        MinigameManager.Instance.StartMinigame();
     }
 
     IEnumerator AssignTurnOrderCoroutine()

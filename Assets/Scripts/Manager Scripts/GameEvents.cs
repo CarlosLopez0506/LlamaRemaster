@@ -26,6 +26,8 @@ public class GameEvents : MonoBehaviour
     public IEnumerator InitializeBoardScene(List<string> orderedPlayers)
     {
         yield return null;
+        MinigameManager.Instance._chooseRandomMinigame = true;
+        MinigameManager.Instance.channelButtonSceneToPlay = null;
         InitializeCameras();
         yield return null;
         InitializePlayers();
@@ -36,6 +38,7 @@ public class GameEvents : MonoBehaviour
         yield return null;
         PositionPlayers(orderedPlayers);
         yield return StartCoroutine(LaunchStore());
+        MinigameManager.Instance.StartMinigame();
     }
 
     private void InitializeCameras()
@@ -142,71 +145,124 @@ public class GameEvents : MonoBehaviour
         }
     }
 
-public IEnumerator LaunchStore()
-{
-    CameraSwitcher.Instance.SwitchCamera(CameraSwitcher.Instance.cameras[1], CameraSwitcher.Instance.cameras[3]);
-    GameObject masterControl = GameObject.FindGameObjectWithTag("MasterControl");
-    Vector3 masterControlPosition = masterControl.transform.position;
-
-    GameObject[] storeButtons = GameObject.FindGameObjectsWithTag("ButtonStore");
-    GameObject selectedButton = null; // Track the currently selected button
-    Color buttonColor = storeButtons[0].GetComponent<Renderer>().material.color;
-    
-    if (masterControl != null)
+    public IEnumerator LaunchStore()
     {
-        foreach (var player in PlayerDataManager.Instance.allPlayers)
+        CameraSwitcher.Instance.SwitchCamera(CameraSwitcher.Instance.cameras[1], CameraSwitcher.Instance.cameras[3]);
+        GameObject masterControl = GameObject.FindGameObjectWithTag("MasterControl");
+        Vector3 masterControlPosition = masterControl.transform.position;
+
+        GameObject[] storeButtons = GameObject.FindGameObjectsWithTag("ButtonStore");
+        GameObject selectedButton = null; // Track the currently selected button
+        Color buttonColor = storeButtons[0].GetComponent<Renderer>().material.color;
+
+        if (masterControl != null)
         {
-            var playerCurrentPosition = player.GetPlayerCurrentPosition();
-            yield return new WaitForSeconds(1f);
-
-            player.SetPlayerPosition(masterControlPosition);
-            var currentStoreButton = 0;
-            float inputCooldown = 0.25f; 
-
-            while (true)
+            foreach (var player in PlayerDataManager.Instance.allPlayers)
             {
-                selectedButton = storeButtons[currentStoreButton];
-                foreach (GameObject storeButton in storeButtons)
+                var playerCurrentPosition = player.GetPlayerCurrentPosition();
+                yield return new WaitForSeconds(1f);
+
+                player.SetPlayerPosition(masterControlPosition);
+                var currentStoreButton = 0;
+                float inputCooldown = 0.25f;
+
+                while (true)
                 {
-                    ResetButtonColor(storeButton, buttonColor);
-                }
+                    selectedButton = storeButtons[currentStoreButton];
+                    foreach (GameObject storeButton in storeButtons)
+                    {
+                        ResetButtonColor(storeButton, buttonColor);
+                    }
 
-                ChangeButtonColor(selectedButton);
+                    ChangeButtonColor(selectedButton);
 
-                yield return new WaitForSeconds(inputCooldown); // Introduce a delay before checking for input
+                    yield return new WaitForSeconds(inputCooldown);
 
-                PlayerData.JoystickDirection joystickDirection = player.GetJoystickDirection();
+                    PlayerData.JoystickDirection joystickDirection = PlayerData.JoystickDirection.None;
 
-                switch (joystickDirection)
-                {
-                    case PlayerData.JoystickDirection.Left:
-                        currentStoreButton = (currentStoreButton + 1) % storeButtons.Length;
+                    yield return new WaitUntil(() =>
+                    {
+                        joystickDirection = player.GetJoystickDirection();
+                        return joystickDirection != PlayerData.JoystickDirection.None ||
+                               player.ButtonPressed(PlayerData.Button.A) || player.ButtonPressed(PlayerData.Button.B);
+                    });
+
+                    switch (joystickDirection)
+                    {
+                        case PlayerData.JoystickDirection.Left:
+                            currentStoreButton = (currentStoreButton + 1) % storeButtons.Length;
+                            break;
+                        case PlayerData.JoystickDirection.Right:
+                            // Handle Right direction if needed
+                            break;
+                        case PlayerData.JoystickDirection.None:
+                            // Handle the case when no joystick direction is pressed
+                            break;
+                    }
+
+                    if (player.ButtonPressed(PlayerData.Button.A))
+                    {
+                        Debug.Log(selectedButton.name);
+                        ProcessPurchase(player, selectedButton);
                         break;
-                    case PlayerData.JoystickDirection.Right:
+                    }
+
+                    if (player.ButtonPressed(PlayerData.Button.B))
+                    {
+                        // Handle the case when B button is pressed
+                        Debug.Log("B button pressed");
+                        Debug.Log("next player");
                         break;
+                    }
                 }
 
-                if (player.ButtonPressed(PlayerData.Button.A))
-                {
-                    Debug.Log(currentStoreButton);
-                    break;
-                }
+                ResetButtonColor(selectedButton, buttonColor);
 
-                yield return null;
+                player.SetPlayerPosition(playerCurrentPosition);
             }
-
-            ResetButtonColor(selectedButton, buttonColor);
-
-            player.SetPlayerPosition(playerCurrentPosition);
+        }
+        else
+        {
+            Debug.LogError("No se encontró ningún objeto con la etiqueta: MasterControl");
         }
     }
-    else
+
+    private void ProcessPurchase(PlayerData player, GameObject selectedButton)
     {
-        Debug.LogError("No se encontró ningún objeto con la etiqueta: MasterControl");
+        Debug.Log("hi");
+        int playerWealth = player.cizanaPoints;
+        Debug.Log(selectedButton.name);
+        string whichButton = selectedButton.name;
+        switch (whichButton)
+        {
+            case "ChannelButton":
+                Debug.Log("ChannelButton case");
+                MinigameManager.Instance.ChannelButton("MG1");
+                break;
+
+            case "VolumeButton":
+
+                break;
+
+            case "MuteButton":
+
+                break;
+
+            case "FastForward":
+
+                break;
+
+            case "Rewind":
+
+                break;
+
+
+            default:
+                Debug.LogError("No button");
+                break;
+        }
     }
 
-    yield return null;
-}
     private void ChangeButtonColor(GameObject button)
     {
         Renderer renderer = button.GetComponent<Renderer>();

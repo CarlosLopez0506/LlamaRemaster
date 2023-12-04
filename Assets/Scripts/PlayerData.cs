@@ -10,7 +10,7 @@ public class PlayerData
     public int position;
     public int cizanaPoints;
     public int playerControllerNumber;
-    public Dictionary<string, bool> Debuffs = new Dictionary<string, bool>();
+    public Debuff[] debuffList;
     public Gamepad assignedGamepad;
     public GameObject llamaPiece;
     public GameObject card;
@@ -24,16 +24,18 @@ public class PlayerData
         assignedGamepad = gamepad;
         playerControllerNumber = controllerNumber;
         InitializeDebuffs();
-        Debug.Log(Debuffs["Mute"]);
     }
 
     public void InitializeDebuffs()
     {
         string[] debuffNames = new string[] { "Mute", "Pause", "VolumeUp", "VolumeDown", "Rewind", "FastForward" };
+        int[] cost = new int[] { 100, 200, 100, 50, 300, 250 };
 
-        foreach (var debuff in debuffNames)
+        debuffList = new Debuff[debuffNames.Length];
+
+        for (int i = 0; i < debuffNames.Length; i++)
         {
-            Debuffs.Add(debuff, false);
+            debuffList[i] = new Debuff(debuffNames[i], cost[i]);
         }
     }
 
@@ -138,8 +140,6 @@ public class PlayerData
 
         if (leftStickInput.magnitude < sensitivityThreshold)
         {
-            Debug.Log(leftStickInput.magnitude);
-            Debug.Log("Joystick Direction: None");
             return JoystickDirection.None;
         }
 
@@ -151,26 +151,25 @@ public class PlayerData
         const float UpRange = 90;
         const float DownRange = 270;
         const float LeftRange = 180;
-        const float RightRange = 360;
 
         if (angle <= UpRange + 45 && angle >= UpRange - 45)
         {
-            Debug.Log("Joystick Direction: Up");
+            // Debug.Log("Joystick Direction: Up");
             return JoystickDirection.Up;
         }
         else if (angle >= DownRange - 45 && angle < DownRange + 45)
         {
-            Debug.Log("Joystick Direction: Down");
+            // Debug.Log("Joystick Direction: Down");
             return JoystickDirection.Down;
         }
         else if (angle <= LeftRange + 45 && angle > LeftRange - 45)
         {
-            Debug.Log("Joystick Direction: Left");
+            // Debug.Log("Joystick Direction: Left");
             return JoystickDirection.Left;
         }
         else
         {
-            Debug.Log("Joystick Direction: Right");
+            // Debug.Log("Joystick Direction: Right");
             return JoystickDirection.Right;
         }
     }

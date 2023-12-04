@@ -242,7 +242,6 @@ MonoBehaviour:
   scoreTexts:
   - {fileID: 1207166947}
   - {fileID: 220037671}
-  - {fileID: 1837379182}
   audioSource: {fileID: 601322352}
 --- !u!1 &29894434
 GameObject:
@@ -1341,7 +1340,6 @@ MonoBehaviour:
   objects:
   - {fileID: 1224305001}
   - {fileID: 1290488627}
-  - {fileID: 1671733944}
 --- !u!4 &620874727
 Transform:
   m_ObjectHideFlags: 0
@@ -3662,7 +3660,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1671733937}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a63c2f7d24b639c4e86ca1d41beb7337, type: 3}
   m_Name: 

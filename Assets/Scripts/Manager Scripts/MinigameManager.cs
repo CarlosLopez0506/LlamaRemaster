@@ -13,6 +13,9 @@ public class MinigameManager : MonoBehaviour
     public RectTransform roulettePanel;
     public GameObject minigameTextPrefab;
     public List<string> minigameNames = new List<string>();
+    public bool _chooseRandomMinigame = true;
+    public string channelButtonSceneToPlay;
+
 
     private int _selectedMinigameIndex;
     private List<PlayerInfo> _playerScores = new List<PlayerInfo>();
@@ -57,6 +60,27 @@ public class MinigameManager : MonoBehaviour
         }
     }
 
+    public void ChannelButton(string sceneName)
+    {
+        _chooseRandomMinigame = false;
+        channelButtonSceneToPlay = sceneName;
+        
+    }
+
+    public void StartMinigame()
+    {
+        Debug.Log(_chooseRandomMinigame);
+        Debug.Log(channelButtonSceneToPlay);
+        if (_chooseRandomMinigame == false && channelButtonSceneToPlay != null)
+        {
+            StartCoroutine(LoadMinigameScene(channelButtonSceneToPlay));
+        }
+        else if (_chooseRandomMinigame)
+        {
+            ChooseRandomMinigame();
+        }
+    }
+
     public void ChooseRandomMinigame()
     {
         minigameCanvas = GameObject.Find("TV")?.GetComponent<Canvas>();
@@ -98,7 +122,7 @@ public class MinigameManager : MonoBehaviour
         StartCoroutine(LoadMinigameScene(minigameScene));
     }
 
-    private IEnumerator LoadMinigameScene(string sceneName)
+    public IEnumerator LoadMinigameScene(string sceneName)
     {
         yield return null;
         SceneManager.LoadScene(sceneName);
