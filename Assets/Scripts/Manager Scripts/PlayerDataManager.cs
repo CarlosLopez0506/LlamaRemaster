@@ -27,21 +27,15 @@ public class PlayerDataManager : MonoBehaviour
 
     public void InitializePlayers()
     {
-        // Initialize players with names, initial positions, and assigned gamepads
         allPlayers = new List<PlayerData>();
 
-        // Desired names for players
         string[] playerNames = { "Manny", "Moe", "Maroon", "Mei" };
 
         for (int i = 0; i < Gamepad.all.Count && i < playerNames.Length; i++)
         {
-            // Create a new player with the desired name, initial position, and assigned gamepad
             PlayerData player = new PlayerData(playerNames[i], 1, Gamepad.all[i], i+1);
-
-            // Add the player to the list of all players
             allPlayers.Add(player);
 
-            // Find the cubes in the scene by name and group them in an array
             Transform[] targetCubes = pieceManager4PlayerData.GetTargetCubes(12, i);
 
             // Set the target cubes for the player

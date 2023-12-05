@@ -1,46 +1,69 @@
-﻿using UnityEngine;
-using System.Collections;
+﻿using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement;
-using TMPro;
-using System.Collections.Generic;
-using System.Linq;
 
-namespace Manager_Scripts
+
+public class TwelveButtonList : MonoBehaviour
 {
-    public class TwelveButtonList : MonoBehaviour
+    public static TwelveButtonList Instance;
 
+    public List<TwelveButton> twelveButtonsArray;
+    [SerializeField] private TwelveButtonManager twelveButtonManager;
+
+    private void Awake()
     {
-        public static TwelveButtonList Instance;
-        public GameObject[] twelveButtons;
-        [SerializeField] private TwelveButtonManager _twelveButtonManager;
+        InitializeTwelveButtons(twelveButtonManager.BuscarYOrdenarBotonesPorNombre());
 
-        private void Awake()
+        if (Instance == null)
         {
-            _twelveButtonManager.BuscarYOrdenarBotonesPorNombre();
-
-            if (Instance == null)
-            {
-                Instance = this;
-                DontDestroyOnLoad(gameObject);
-            }
-            else
-            {
-                Destroy(gameObject);
-            }
-
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
         }
-        void Start()
+        else
         {
-            InitializeTwelveButtons(_twelveButtonManager.BuscarYOrdenarBotonesPorNombre());
+            Destroy(gameObject);
         }
+    }
 
-        public void InitializeTwelveButtons(GameObject[] buttons)
+    void Start()
+    {
+        InitializeTwelveButtons(twelveButtonManager.BuscarYOrdenarBotonesPorNombre());
+        Debug.Log("papu");
+    }
+
+    private void InitializeTwelveButtons(GameObject[] buttons)
+    {
+        twelveButtonsArray = new List<TwelveButton>();
+
+        for (int i = 0; i < buttons.Length; i++)
         {
-            foreach (var button in buttons)
-            {
-                
-            }
+            TwelveButton twelveButton = new TwelveButton(i + 1, buttons[i], "none",
+                buttons[i].GetComponent<Renderer>().material.color);
+
+            twelveButtonsArray.Add(twelveButton);
+        }
+    }
+
+    public void FindButtons()
+    {
+        GameObject[] orderedButtons = twelveButtonManager.BuscarYOrdenarBotonesPorNombre();
+
+        for (int i = 0; i < twelveButtonsArray.Count; i++)
+        {
+            twelveButtonsArray[i].ButtonPrefab = orderedButtons[i];
+        }
+    }
+
+
+    public TwelveButton GetTwelveButton(int buttonNumber)
+    {
+        if (buttonNumber >= 0 && buttonNumber <= twelveButtonsArray.Count)
+        {
+            return twelveButtonsArray[buttonNumber];
+        }
+        else
+        {
+            Debug.LogWarning("Invalid button number: " + buttonNumber);
+            return null;
         }
     }
 }

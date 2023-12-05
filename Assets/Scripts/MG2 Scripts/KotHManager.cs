@@ -8,6 +8,7 @@ public class KotHManager : MonoBehaviour
     [SerializeField] private float gameDuration;
     public UnityEvent gameOverEvent;
     private float _timer;
+    
     // Start is called before the first frame update
     void Start()
     {

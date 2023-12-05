@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using System.Collections.Generic;
 
@@ -9,10 +10,10 @@ public class PieceManager : MonoBehaviour
     public GameObject moePrefab; // Prefab para la pieza
     public GameObject maroonPrefab; // Prefab para la pieza
     public GameObject mannyPrefab; // Prefab para la pieza
-    
+
     public List<GameObject> pieces = new List<GameObject>();
     public List<Transform> playerPieces = new List<Transform>();
-    
+
     private List<PlayerData> allPlayers; // Add this line
 
 
@@ -49,24 +50,24 @@ public class PieceManager : MonoBehaviour
                     pieceObject = Instantiate(meiPrefab);
                     break;
                 case "Maroon":
-                    pieceObject = Instantiate(maroonPrefab); // Assuming you have a maroonPrefab
+                    pieceObject = Instantiate(maroonPrefab); 
                     break;
                 case "Manny":
-                    pieceObject = Instantiate(mannyPrefab); // Assuming you have a mannyPrefab
+                    pieceObject = Instantiate(mannyPrefab); 
                     break;
                 case "Moe":
-                    pieceObject = Instantiate(moePrefab); // Assuming you have a moePrefab
+                    pieceObject = Instantiate(moePrefab); 
                     break;
                 default:
-                    Debug.LogWarning($"Piece for player '{player.playerName}' does not exist.");
-                    continue; // Skip to the next iteration of the loop
+                    Debug.LogError($"Piece for player '{player.playerName}' does not exist.");
+                    continue;
             }
 
             playerPieces.Add(pieceObject.transform);
             pieces.Add(pieceObject);
         }
     }
-    
+
     public void SetPiecesLastPositions()
     {
         for (int playerIndex = 0; playerIndex < PlayerDataManager.Instance.allPlayers.Count; playerIndex++)
@@ -84,7 +85,8 @@ public class PieceManager : MonoBehaviour
                 }
                 else
                 {
-                    Debug.LogError($"Invalid last position {lastPosition + 1} for player {playerIndex + 1}. Check player positions and target cubes.");
+                    Debug.LogError(
+                        $"Invalid last position {lastPosition + 1} for player {playerIndex + 1}. Check player positions and target cubes.");
                 }
             }
             else
@@ -108,28 +110,48 @@ public class PieceManager : MonoBehaviour
         }
     }
 
-    public void MovePieceByCubes(PlayerData player, int numCubesToMove)
+
+    public IEnumerator MovePieceByCubes(PlayerData player, int numCubesToMove)
     {
-        Debug.Log(player.playerControllerNumber);
-        Transform pieceTransform = playerPieces[player.playerControllerNumber-1];
+        Transform pieceTransform = playerPieces[player.playerControllerNumber - 1];
+        var startPlace = player.position;
+        var finalPlace = player.position + numCubesToMove;
 
-        int currentCubeIndex = player.position ; // Assuming positions are 1-based
-
-        // Calculate the new cube index after moving by the specified number of cubes
-        int newCubeIndex = (currentCubeIndex + numCubesToMove) % player.targetCubes.Length;
-
-        for (int i = 0; i < numCubesToMove; i++)
+        for (int i = startPlace; i < finalPlace; i++)
         {
+            // Get the new position and set the Y-coordinate to the ground level
+            Vector3 newPosition = player.targetCubes[i].position;
+            newPosition.y = pieceTransform.position.y; // Set Y to the current Y (ground level)
+            yield return MovePieceParabolic(pieceTransform, newPosition, 0.5f);
+
+
             player.MoveForward();
+            PlayerCardManager.Instance.UpdateCardData(PlayerDataManager.Instance.allPlayers);
+        }
+    }
+
+    private IEnumerator MovePieceParabolic(Transform pieceTransform, Vector3 targetPosition, float duration)
+    {
+        float elapsedTime = 0f;
+        Vector3 initialPosition = pieceTransform.position;
+
+        while (elapsedTime < duration)
+        {
+            float t = elapsedTime / duration;
+            // Use a parabolic (quadratic) interpolation for the Y-coordinate
+            pieceTransform.position = new Vector3(
+                Mathf.Lerp(initialPosition.x, targetPosition.x, t),
+                initialPosition.y + Mathf.Sin(t * Mathf.PI) * 2f, // Adjust the jump height
+                Mathf.Lerp(initialPosition.z, targetPosition.z, t)
+            );
+
+            elapsedTime += Time.deltaTime;
+            yield return null;
         }
 
-        // Move the piece to the position of the new cube
-        Vector3 newPosition = player.targetCubes[newCubeIndex].position;
-        pieceTransform.position = newPosition;
-
-        PlayerCardManager.Instance.UpdateCardData(PlayerDataManager.Instance.allPlayers);
-
+        pieceTransform.position = targetPosition; // Ensure the final position is exact
     }
+
 
     public Transform[] GetTargetCubes(int spawnCount, int playerIndex)
     {
@@ -165,5 +187,4 @@ public class PieceManager : MonoBehaviour
 
         return targetCubes.ToArray();
     }
-    
 }

@@ -31,6 +31,7 @@ public class PlayerData
         string[] debuffNames = new string[] { "Mute", "Pause", "VolumeUp", "VolumeDown", "Rewind", "FastForward" };
         int[] cost = new int[] { 100, 200, 100, 50, 300, 250 };
 
+
         debuffList = new Debuff[debuffNames.Length];
 
         for (int i = 0; i < debuffNames.Length; i++)
@@ -38,6 +39,38 @@ public class PlayerData
             debuffList[i] = new Debuff(debuffNames[i], cost[i]);
         }
     }
+
+    public void ModifyDebuffState(string debuffName)
+    {
+        foreach (Debuff debuff in debuffList)
+        {
+            if (debuff.debuffData.ContainsKey(debuffName))
+            {
+                debuff.ToggleDebuff(debuffName);
+            }
+            else
+            {
+                Debug.LogError($"Debuff '{debuffName}' not found in player's debuff list.");
+
+            }
+        }
+
+    }
+    public bool IsDebuffActive(string debuffName)
+    {
+        foreach (Debuff debuff in debuffList)
+        {
+            if (debuff.debuffData.ContainsKey(debuffName))
+            {
+                return debuff.debuffData[debuffName]; 
+            }
+        }
+
+        Debug.LogError($"Debuff '{debuffName}' not found in player's debuff list.");
+        return false; // Return false if debuff not found
+    }
+
+
 
     public void SetCard(GameObject card)
     {
@@ -74,14 +107,12 @@ public class PlayerData
 
     public void MoveForward()
     {
-        // Move the player forward by incrementing the position
         position++;
         PlayerCardManager.Instance.UpdateCardData(PlayerDataManager.Instance.allPlayers);
     }
 
     public void MoveBackward()
     {
-        // Move the player backward by decrementing the position, but not below 1
         position = Mathf.Max(1, position - 1);
     }
 

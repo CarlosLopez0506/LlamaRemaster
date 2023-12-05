@@ -1,35 +1,35 @@
+using System;
+using System.Collections.Generic;
+
 [System.Serializable]
 public class Debuff
 {
-    public string DebuffName { get; private set; }
+    public Dictionary<string, bool> debuffData;
+    private int cost;
+
     public int Cost
     {
-        get { return _cost; }
-        set { _cost = value; }
-    }
-    public bool IsActive
-    {
-        get { return active; }
-        private set { active = value; }
+        get { return cost; }
+        set { cost = value; }
     }
 
-    private int _cost;
-    private bool active;
-
-    public Debuff(string name, int price)
+    public Debuff(string debuffName, int cost)
     {
-        DebuffName = name;
-        Cost = price;
-        IsActive = false;
+        this.cost = cost;
+        debuffData = new Dictionary<string, bool>();
+        debuffData[debuffName] = false;
     }
 
-    public void ActivateDebuff()
+    public void ToggleDebuff(string debuffName)
     {
-        IsActive = true;
-    }
-
-    public void DeactivateDebuff()
-    {
-        IsActive = false;
+        if (debuffData.ContainsKey(debuffName))
+        {
+            debuffData[debuffName] = !debuffData[debuffName];
+        }
+        else
+        {
+            Console.WriteLine($"Debuff '{debuffName}' not found.");
+            // You can handle this case as per your requirement, e.g., throw an exception.
+        }
     }
 }
