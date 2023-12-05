@@ -14,6 +14,7 @@ public class MinigameManager : MonoBehaviour
     public GameObject minigameTextPrefab;
     public List<string> minigameNames = new List<string>();
     public bool _chooseRandomMinigame = true;
+    public bool _duel = false;
     public string channelButtonSceneToPlay;
 
 
@@ -62,8 +63,16 @@ public class MinigameManager : MonoBehaviour
 
     public void ChannelButton(string sceneName)
     {
-        _chooseRandomMinigame = false;
-        channelButtonSceneToPlay = sceneName;
+        if (sceneName != "Duel")
+        {
+            _chooseRandomMinigame = false;
+            channelButtonSceneToPlay = sceneName;
+        }
+        else
+        {
+            Debug.Log("Duel Activated");
+            _duel = true;
+        }
         
     }
 
@@ -74,10 +83,17 @@ public class MinigameManager : MonoBehaviour
         if (_chooseRandomMinigame == false && channelButtonSceneToPlay != null)
         {
             StartCoroutine(LoadMinigameScene(channelButtonSceneToPlay));
+            _chooseRandomMinigame = true;
+            channelButtonSceneToPlay = null;
         }
-        else if (_chooseRandomMinigame)
+        else if (_chooseRandomMinigame && !_duel)
         {
             ChooseRandomMinigame();
+        }
+        else if (_duel)
+        {
+            StartCoroutine(LoadMinigameScene("Duel"));
+            _duel = false;
         }
     }
 

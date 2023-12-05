@@ -23,4 +23,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Minigame/MG2.unity
     guid: 629b87b6159e94b4ba4a2d8a2116325e
+  - enabled: 1
+    path: Assets/Scenes/Duel.unity
+    guid: 715eb884727162d49b26919bbadf2000
   m_configObjects: {}

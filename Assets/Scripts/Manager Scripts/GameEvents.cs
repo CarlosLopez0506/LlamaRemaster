@@ -1,14 +1,19 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using Manager_Scripts;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 
 public class GameEvents : MonoBehaviour
 {
     public static GameEvents Instance;
+    [SerializeField] private TwelveButtonManager _twelveButtonManager;
+    [SerializeField] private ButtonEventsHandler _buttonEventsHandler;
 
     void Awake()
     {
@@ -36,7 +41,10 @@ public class GameEvents : MonoBehaviour
         yield return null;
         InitializePlayerPieces();
         yield return null;
-        PositionPlayers(orderedPlayers);
+        yield return new WaitForSeconds(2f);
+        yield return StartCoroutine(PositionPlayers(orderedPlayers));
+        TwelveButtonList.Instance.FindButtons();
+        yield return new WaitForSeconds(2f);
         yield return StartCoroutine(LaunchStore());
         MinigameManager.Instance.StartMinigame();
     }
@@ -65,38 +73,41 @@ public class GameEvents : MonoBehaviour
         PieceManager.Instance.SetAllPlayers(PlayerDataManager.Instance.allPlayers);
     }
 
-    private void PositionPlayers(List<string> orderedPlayers)
+    private IEnumerator PositionPlayers(List<string> orderedPlayers)
     {
-        foreach (PlayerData player in PlayerDataManager.Instance.allPlayers)
+        foreach (var player in PlayerDataManager.Instance.allPlayers)
         {
-            for (int i = 0; i < orderedPlayers.Count; i++)
+            foreach (var playerName in orderedPlayers)
             {
-                if (player.playerName == orderedPlayers[i])
+                if (player.playerName == playerName)
                 {
-                    PositionPlayerBasedOnOrder(player, i + 1);
+                    int placement = orderedPlayers.IndexOf(playerName) + 1;
+                    switch (placement)
+                    {
+                        case 1:
+                            yield return StartCoroutine(
+                                PieceManager.Instance.MovePieceByCubes(player, MoveByCubesValue));
+                            continue;
+                        case 2:
+                            player.AddCizanaPoints(PointsForSecondPlace);
+                            continue;
+                        case 3:
+                            player.AddCizanaPoints(PointsForThirdPlace);
+                            continue;
+                        case 4:
+                            player.AddCizanaPoints(PointsForFourthPlace);
+                            continue;
+                    }
                 }
             }
         }
     }
 
-    private void PositionPlayerBasedOnOrder(PlayerData player, int currentPosition)
-    {
-        switch (currentPosition)
-        {
-            case 1:
-                PieceManager.Instance.MovePieceByCubes(player, 2);
-                break;
-            case 2:
-                player.AddCizanaPoints(25);
-                break;
-            case 3:
-                player.AddCizanaPoints(50);
-                break;
-            case 4:
-                player.AddCizanaPoints(75);
-                break;
-        }
-    }
+    private const int MoveByCubesValue = 2;
+    private const int PointsForSecondPlace = 25;
+    private const int PointsForThirdPlace = 50;
+    private const int PointsForFourthPlace = 75;
+
 
     public IEnumerator ManageDialogIntroduction()
     {
@@ -171,10 +182,10 @@ public class GameEvents : MonoBehaviour
                     selectedButton = storeButtons[currentStoreButton];
                     foreach (GameObject storeButton in storeButtons)
                     {
-                        ResetButtonColor(storeButton, buttonColor);
+                        _buttonEventsHandler.ResetButtonColor(storeButton, buttonColor);
                     }
 
-                    ChangeButtonColor(selectedButton);
+                    _buttonEventsHandler.ChangeButtonColor(selectedButton);
 
                     yield return new WaitForSeconds(inputCooldown);
 
@@ -184,7 +195,8 @@ public class GameEvents : MonoBehaviour
                     {
                         joystickDirection = player.GetJoystickDirection();
                         return joystickDirection != PlayerData.JoystickDirection.None ||
-                               player.ButtonPressed(PlayerData.Button.A) || player.ButtonPressed(PlayerData.Button.B);
+                               player.ButtonPressed(PlayerData.Button.A) || player.ButtonPressed(PlayerData.Button.B) ||
+                               player.ButtonPressed(PlayerData.Button.Y);
                     });
 
                     switch (joystickDirection)
@@ -200,23 +212,36 @@ public class GameEvents : MonoBehaviour
                             break;
                     }
 
-                    if (player.ButtonPressed(PlayerData.Button.A))
+                    if (MinigameManager.Instance._duel && selectedButton.name == "ChannelButton")
                     {
-                        Debug.Log(selectedButton.name);
-                        ProcessPurchase(player, selectedButton);
-                        break;
+                    }
+                    else
+                    {
+                        if (player.ButtonPressed(PlayerData.Button.A))
+                        {
+                            Debug.Log(selectedButton.name);
+                            yield return ProcessPurchase(player, selectedButton);
+
+                            break;
+                        }
+
+                        if (player.ButtonPressed(PlayerData.Button.Y))
+                        {
+                            Debug.Log("You pressed Y");
+                            MinigameManager.Instance.ChannelButton("Duel");
+                            break;
+                        }
                     }
 
                     if (player.ButtonPressed(PlayerData.Button.B))
                     {
-                        // Handle the case when B button is pressed
                         Debug.Log("B button pressed");
                         Debug.Log("next player");
                         break;
                     }
                 }
 
-                ResetButtonColor(selectedButton, buttonColor);
+                _buttonEventsHandler.ResetButtonColor(selectedButton, buttonColor);
 
                 player.SetPlayerPosition(playerCurrentPosition);
             }
@@ -227,24 +252,27 @@ public class GameEvents : MonoBehaviour
         }
     }
 
-    private void ProcessPurchase(PlayerData player, GameObject selectedButton)
+    private IEnumerator ProcessPurchase(PlayerData player, GameObject selectedButton)
     {
-        Debug.Log("hi");
         int playerWealth = player.cizanaPoints;
         Debug.Log(selectedButton.name);
         string whichButton = selectedButton.name;
         switch (whichButton)
         {
             case "ChannelButton":
-                Debug.Log("ChannelButton case");
+
                 MinigameManager.Instance.ChannelButton("MG1");
+
+
                 break;
 
             case "VolumeButton":
+                yield return StartCoroutine(VolumeUI(player));
 
                 break;
 
             case "MuteButton":
+                yield return StartCoroutine(_twelveButtonManager.PlaceTrap(player, "Mute"));
 
                 break;
 
@@ -263,33 +291,53 @@ public class GameEvents : MonoBehaviour
         }
     }
 
-    private void ChangeButtonColor(GameObject button)
+    public IEnumerator VolumeUI(PlayerData player)
     {
-        Renderer renderer = button.GetComponent<Renderer>();
-        if (renderer != null)
+        string volume = null;
+        PlayerData.JoystickDirection joystickDirection = PlayerData.JoystickDirection.None;
+
+        yield return new WaitUntil(() =>
         {
-            float attenuationFactor = 0.8f;
-            attenuationFactor = Mathf.Clamp(attenuationFactor, 0f, 1f);
+            joystickDirection = player.GetJoystickDirection();
+            return joystickDirection != PlayerData.JoystickDirection.None;
+        });
 
-            var material = renderer.material;
-            Color currentColor = material.color;
-
-            Color darkenedColor = new Color(currentColor.r * attenuationFactor,
-                currentColor.g * attenuationFactor,
-                currentColor.b * attenuationFactor,
-                currentColor.a);
-
-            material.color = darkenedColor;
-        }
-    }
-
-    private void ResetButtonColor(GameObject button, Color color)
-    {
-        Renderer renderer = button.GetComponent<Renderer>();
-        if (renderer != null)
+        switch (joystickDirection)
         {
-            // Reset to the original color or your desired color
-            renderer.material.color = color;
+            case PlayerData.JoystickDirection.Up:
+                yield return new WaitUntil(() =>
+                {
+                    joystickDirection = player.GetJoystickDirection();
+                    return joystickDirection == PlayerData.JoystickDirection.None ||
+                           joystickDirection == PlayerData.JoystickDirection.Down;
+                });
+
+                if (joystickDirection == PlayerData.JoystickDirection.None)
+                {
+                    volume = "VolumeUp";
+                }
+
+                break;
+            case PlayerData.JoystickDirection.Down:
+                yield return new WaitUntil(() =>
+                {
+                    joystickDirection = player.GetJoystickDirection();
+                    return joystickDirection == PlayerData.JoystickDirection.None ||
+                           joystickDirection == PlayerData.JoystickDirection.Up;
+                });
+
+                if (joystickDirection == PlayerData.JoystickDirection.None)
+                {
+                    volume = "VolumeDown";
+                }
+
+                break;
+            case PlayerData.JoystickDirection.None:
+                break;
         }
+
+        yield return new WaitUntil(() => player.ButtonPressed(PlayerData.Button.A));
+
+        yield return StartCoroutine(_twelveButtonManager.PlaceTrap(player, volume));
     }
 }

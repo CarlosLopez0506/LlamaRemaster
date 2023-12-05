@@ -16,9 +16,11 @@ public class Hill : MonoBehaviour
     private float _timer;
     [SerializeField] private float addPointsRate;
     private List<LlamaPoints> _llamas = new();
+    private PlayerManager _playerManager;
 
     private void Start()
     {
+        _playerManager = GameObject.FindObjectOfType<PlayerManager>();
         ChangeColor();
     }
 
@@ -30,6 +32,7 @@ public class Hill : MonoBehaviour
             if (_timer >= addPointsRate)
             {
                 _llamas[0].AddPoints(1);
+                _playerManager.GetMaxScore();
                 _timer = 0;
             }
         }
