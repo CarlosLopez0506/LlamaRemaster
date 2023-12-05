@@ -13,6 +13,9 @@ public class MinigameManager : MonoBehaviour
     public RectTransform roulettePanel;
     public GameObject minigameTextPrefab;
     public List<string> minigameNames = new List<string>();
+    public bool _chooseRandomMinigame = true;
+    public string channelButtonSceneToPlay;
+
 
     private int _selectedMinigameIndex;
     private List<PlayerInfo> _playerScores = new List<PlayerInfo>();
@@ -35,7 +38,7 @@ public class MinigameManager : MonoBehaviour
     private void InitializeMinigameNames()
     {
         minigameNames.Add("MG1");
-        // Add more minigame entries as needed
+        minigameNames.Add("MG2");
     }
 
     private void CreateMinigameText()
@@ -54,6 +57,27 @@ public class MinigameManager : MonoBehaviour
             textRect.localPosition = new Vector3(textRect.localPosition.x, textRect.localPosition.y, 0);
 
             textObj.GetComponentInChildren<TextMeshProUGUI>().text = minigameNames[i];
+        }
+    }
+
+    public void ChannelButton(string sceneName)
+    {
+        _chooseRandomMinigame = false;
+        channelButtonSceneToPlay = sceneName;
+        
+    }
+
+    public void StartMinigame()
+    {
+        Debug.Log(_chooseRandomMinigame);
+        Debug.Log(channelButtonSceneToPlay);
+        if (_chooseRandomMinigame == false && channelButtonSceneToPlay != null)
+        {
+            StartCoroutine(LoadMinigameScene(channelButtonSceneToPlay));
+        }
+        else if (_chooseRandomMinigame)
+        {
+            ChooseRandomMinigame();
         }
     }
 
@@ -98,7 +122,7 @@ public class MinigameManager : MonoBehaviour
         StartCoroutine(LoadMinigameScene(minigameScene));
     }
 
-    private IEnumerator LoadMinigameScene(string sceneName)
+    public IEnumerator LoadMinigameScene(string sceneName)
     {
         yield return null;
         SceneManager.LoadScene(sceneName);

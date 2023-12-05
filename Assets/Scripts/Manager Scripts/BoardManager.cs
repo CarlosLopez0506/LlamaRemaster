@@ -1,9 +1,12 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using TMPro;
+using Random = UnityEngine.Random;
 
 
 public class BoardManager : MonoBehaviour
@@ -13,8 +16,11 @@ public class BoardManager : MonoBehaviour
     private int _currentPlayerIndex;
     private bool _isGameStarted;
     private bool _waitingForButtonPress = true;
+    public GameObject masterControl;
+    private Vector3 masterControlPosition;
     private const bool Counting = true;
     private int _points;
+    private List<PlayerData> newPlayerTurns = new List<PlayerData>();
 
 
     void Awake()
@@ -50,62 +56,16 @@ public class BoardManager : MonoBehaviour
     void InitializeGameComponents()
     {
         PlayerCardManager.Instance.CreatePlayerCards();
-        PieceManager.Instance.CreatePlayerPieces(Gamepad.all.Count);
+        PieceManager.Instance.CreatePlayerPieces(PlayerDataManager.Instance.allPlayers);
         PieceManager.Instance.SetPiecesLastPositions();
         PieceManager.Instance.SetAllPlayers(PlayerDataManager.Instance.allPlayers);
         PlayerCardManager.Instance.UpdateCardData(PlayerDataManager.Instance.allPlayers);
     }
 
-    private IEnumerator ManageDialogIntroduction()
-    {
-        string[] paragraphs =
-        {
-            "Welcome to Llama Masters – the ultimate party filled with laughter, strategy, and llama magic. Assemble your friends, unleash your inner llama wrangler, and let the llama drama unfold!",
-            "How it works: Players get unique numbers to determine the order. The one with the lowest or highest number kicks off as the first Llama Master. The llama baton is passed, ensuring everyone gets their chance to shine!",
-            "Grab your llama hats, dust off your llama dance moves, and get ready for an epic showdown of wit and whimsy. Llama Masters is not just a game; it's a journey into the fantastical world of llama lore!",
-            "May the llama gods be in your favor – let the llama-filled festivities begin!"
-        };
-
-        GameObject dialog = GameObject.Find("Dialog");
-        RawImage rawImageEncontrada = GameObject.Find("Dialog")?.GetComponent<RawImage>();
-
-        if (rawImageEncontrada != null)
-        {
-            rawImageEncontrada.enabled = true;
-            GameObject dialogChild = dialog.transform.GetChild(0).gameObject;
-            TextMeshProUGUI textDialog = dialogChild.GetComponent<TextMeshProUGUI>();
-            textDialog.enabled = true;
-
-
-            textDialog.color = Color.black;
-
-            var textMeshProComponent = textDialog.GetComponentsInChildren<TextMeshProUGUI>(true)[0];
-            textMeshProComponent.enableAutoSizing = true;
-
-            foreach (var paragraph in paragraphs)
-            {
-                textDialog.text = paragraph;
-                yield return null;
-                Debug.Log(PlayerDataManager.Instance.IsButtonPressed(PlayerData.Button.A));
-
-                yield return new WaitUntil(() => PlayerDataManager.Instance.IsButtonPressed(PlayerData.Button.A));
-            }
-
-            textDialog.enabled = false;
-            rawImageEncontrada.enabled = false;
-            CameraSwitcher.Instance.SwitchCamera(CameraSwitcher.Instance.cameras[0],
-                CameraSwitcher.Instance.cameras[2]);
-        }
-        else
-        {
-            Debug.Log(
-                "RawImage no encontrada. Asegúrate de que el nombre sea correcto y de que el objeto tiene un componente RawImage.");
-        }
-    }
 
     public void ReloadBoard(List<string> orderedPlayers)
     {
-        StartCoroutine(GameEvents.Instance.WaitForSceneLoadAndCreatePlayerCards(orderedPlayers));
+        StartCoroutine(GameEvents.Instance.InitializeBoardScene(orderedPlayers));
     }
 
 
@@ -160,7 +120,6 @@ public class BoardManager : MonoBehaviour
         PlayerCardManager.Instance.UpdateCardData(PlayerDataManager.Instance.allPlayers);
         PlayerData currentPlayer = PlayerDataManager.Instance.allPlayers[_currentPlayerIndex];
         Debug.Log($"Starting turn for {currentPlayer.playerName}");
-        MinigameManager.Instance.ChooseRandomMinigame();
     }
 
 
@@ -173,23 +132,25 @@ public class BoardManager : MonoBehaviour
 
         _isGameStarted = true;
         InitializeGameComponents();
-        yield return (ManageDialogIntroduction());
+        yield return StartCoroutine(GameEvents.Instance.ManageDialogIntroduction());
         yield return StartCoroutine(AssignTurnOrderCoroutine());
-        // Debug.Log("Game started successfully.");
+        yield return new WaitForSeconds(2f);
+        MinigameManager.Instance.StartMinigame();
     }
 
     IEnumerator AssignTurnOrderCoroutine()
     {
-        GameObject masterControl = GameObject.FindGameObjectWithTag("MasterControl");
+        masterControl = GameObject.FindGameObjectWithTag("MasterControl");
 
         if (masterControl != null)
         {
-            Vector3 masterControlPosition = masterControl.transform.position;
+            masterControlPosition = masterControl.transform.position;
             Debug.Log($"La posición del objeto es: {masterControlPosition}");
 
 
-            yield return MovePlayersToMasterControl(masterControlPosition);
-            CameraSwitcher.Instance.SwitchCamera(CameraSwitcher.Instance.cameras[2],CameraSwitcher.Instance.cameras[1]);
+            yield return MovePlayersToMasterControl(PlayerDataManager.Instance.allPlayers);
+            CameraSwitcher.Instance.SwitchCamera(CameraSwitcher.Instance.cameras[2],
+                CameraSwitcher.Instance.cameras[1]);
         }
         else
         {
@@ -197,45 +158,119 @@ public class BoardManager : MonoBehaviour
         }
     }
 
-    IEnumerator MovePlayersToMasterControl(Vector3 masterControlPosition)
+    IEnumerator MovePlayersToMasterControl(List<PlayerData> playerWithoutTurn)
     {
-        foreach (var player in PlayerDataManager.Instance.allPlayers)
+        Dictionary<PlayerData, int> miDiccionario = new Dictionary<PlayerData, int>();
+        List<PlayerData> jugadoresRepetidos = new List<PlayerData>();
+
+        foreach (var player in playerWithoutTurn)
         {
-            _points = 0;
+            yield return StartCoroutine(MovePlayerWithTextMesh(player, miDiccionario, jugadoresRepetidos));
+        }
 
-            GameObject playerPiece = PieceManager.Instance.pieces[player.playerControllerNumber - 1];
+        // Process the results, print unique players, and handle repeated players
+        yield return StartCoroutine(ProcessResults(miDiccionario, jugadoresRepetidos));
+    }
 
-            GameObject textMeshContainer = new GameObject("TextMeshContainer");
+    IEnumerator MovePlayerWithTextMesh(PlayerData player, Dictionary<PlayerData, int> miDiccionario,
+        List<PlayerData> jugadoresRepetidos)
+    {
+        _points = 0;
+
+        GameObject playerPiece = PieceManager.Instance.pieces[player.playerControllerNumber - 1];
+
+        TextMeshPro existingTextMesh = playerPiece.GetComponentInChildren<TextMeshPro>();
+
+        TextMeshPro textMesh;
+        GameObject textMeshContainer;
+
+        if (existingTextMesh == null)
+        {
+            textMeshContainer = new GameObject("TextMeshContainer");
             textMeshContainer.transform.parent = playerPiece.transform;
 
-            TextMeshPro textMesh = textMeshContainer.AddComponent<TextMeshPro>();
+            textMesh = textMeshContainer.AddComponent<TextMeshPro>();
 
             textMesh.fontSize = 8;
             textMesh.alignment = TextAlignmentOptions.Center;
             textMeshContainer.transform.localPosition = new Vector3(0f, 3.5f, 0f);
             textMeshContainer.transform.localRotation = Quaternion.Euler(new Vector3(30f, 180f, 0f));
+        }
+        else
+        {
+            // If TextMeshPro component exists, use it
+            textMesh = existingTextMesh;
+            textMeshContainer = existingTextMesh.gameObject;
+        }
 
-            Vector3 playerCurrentPosition = player.GetPlayerCurrentPosition();
+        Vector3 playerCurrentPosition = player.GetPlayerCurrentPosition();
 
-            yield return new WaitForSeconds(1f);
+        yield return new WaitForSeconds(1f);
 
-            player.SetPlayerPosition(masterControlPosition);
+        player.SetPlayerPosition(masterControlPosition);
 
+        var coroutineCount = StartCoroutine(CountEverySecond());
 
-            var coroutineCount = StartCoroutine(CountEverySecond());
+        while (_waitingForButtonPress && !player.ButtonPressed(PlayerData.Button.A))
+        {
+            textMesh.text = _points.ToString();
 
-            while (_waitingForButtonPress && !player.ButtonPressed(PlayerData.Button.A))
+            yield return null;
+        }
+
+        StopCoroutine(coroutineCount);
+        yield return null;
+        player.SetPlayerPosition(playerCurrentPosition);
+        yield return null;
+        Debug.Log(_points);
+        miDiccionario.Add(player, Convert.ToInt32(textMesh.text));
+        textMeshContainer.transform.localRotation = Quaternion.Euler(new Vector3(0f, 180f, 0f));
+
+        _waitingForButtonPress = true;
+    }
+
+    IEnumerator ProcessResults(Dictionary<PlayerData, int> miDiccionario, List<PlayerData> jugadoresRepetidos)
+    {
+        yield return null;
+
+        var diccionarioOrdenado = miDiccionario.OrderBy(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
+        List<PlayerData> listaOrdenadaDeJugadores = diccionarioOrdenado
+            .GroupBy(x => x.Value)
+            .Where(group => group.Count() == 1)
+            .Select(group => group.First().Key)
+            .ToList();
+
+        foreach (var jugadorRepetido in diccionarioOrdenado
+                     .Where(x => diccionarioOrdenado.Count(y => y.Value == x.Value) > 1).Select(x => x.Key))
+        {
+            jugadoresRepetidos.Add(jugadorRepetido);
+        }
+
+        foreach (var jugador in listaOrdenadaDeJugadores)
+        {
+            Debug.Log("Jugador Único: " + jugador.playerName);
+        }
+
+        foreach (var jugadorRepetido in jugadoresRepetidos)
+        {
+            Debug.Log("Jugador Repetido: " + jugadorRepetido.playerName);
+        }
+
+        Debug.Log(listaOrdenadaDeJugadores.Count);
+
+        if (listaOrdenadaDeJugadores.Count > 0)
+        {
+            foreach (var playerWithTurn in listaOrdenadaDeJugadores)
             {
-                textMesh.text = _points.ToString();
-
-                yield return null;
+                newPlayerTurns.Add(playerWithTurn);
             }
+        }
 
-            StopCoroutine(coroutineCount);
-            player.SetPlayerPosition(playerCurrentPosition);
-            textMeshContainer.transform.localRotation = Quaternion.Euler(new Vector3(0f, 180f, 0f));
+        Debug.Log(jugadoresRepetidos.Count);
 
-            _waitingForButtonPress = true;
+        if (jugadoresRepetidos.Count > 0)
+        {
+            yield return StartCoroutine(MovePlayersToMasterControl(jugadoresRepetidos));
         }
     }
 

@@ -6,7 +6,7 @@ using TMPro;
 public class Timer : MonoBehaviour
 {
     public TMP_Text time;
-    public List<TMP_Text> scoreTexts; // Use a list for score texts
+    public List<TMP_Text> scoreTexts; 
     public AudioSource audioSource;
 
     private float _left;
@@ -43,6 +43,7 @@ public class Timer : MonoBehaviour
     List<float> GetScoresFromTexts(List<TMP_Text> texts)
     {
         List<float> scores = new List<float>();
+        Debug.Log(scores.Count);
 
         foreach (TMP_Text text in texts)
         {
