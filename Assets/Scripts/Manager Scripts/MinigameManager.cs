@@ -17,6 +17,7 @@ public class MinigameManager : MonoBehaviour
     public bool _duel = false;
     public string channelButtonSceneToPlay;
 
+    public GameObject rc; 
 
     private int _selectedMinigameIndex;
     private List<PlayerInfo> _playerScores = new List<PlayerInfo>();
@@ -112,8 +113,15 @@ public class MinigameManager : MonoBehaviour
         }
     }
 
-    private IEnumerator SpinRoulette()
+    public IEnumerator SpinRoulette()
     {
+        int randomIndex = Random.Range(0, minigameNames.Count);
+        _selectedMinigameIndex = randomIndex;
+
+        string minigameScene = minigameNames[_selectedMinigameIndex];
+        rc.GetComponent<RouletteController>().StartRoulette(randomIndex, minigameScene);
+        yield return null;
+        /*
         float spinDuration = 3f;
         float elapsedTime = 0f;
 
@@ -131,11 +139,7 @@ public class MinigameManager : MonoBehaviour
             yield return null;
         }
 
-        int randomIndex = Random.Range(0, minigameNames.Count);
-        _selectedMinigameIndex = randomIndex;
-
-        string minigameScene = minigameNames[_selectedMinigameIndex];
-        StartCoroutine(LoadMinigameScene(minigameScene));
+        StartCoroutine(LoadMinigameScene(minigameScene));*/
     }
 
     public IEnumerator LoadMinigameScene(string sceneName)
